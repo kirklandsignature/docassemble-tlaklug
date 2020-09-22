@@ -1,7 +1,63 @@
+objects: 
+  - user: Individual
+  - cohabs: DAList.using(object_type=Individual) 
+---
 mandatory: true
 question: |
-  Hello, ${ name }.
+    Hello, ${ user }!
+subquestion: |
+  You live with ${ cohabs }
+  
+  I asked whether you are artistic. You said ${ user.is_artistic }.
+  
+  Do you like Leonardo da Vinci? ${ user.Likes_Leonardo_da_Vinci }
+  
+  Do you like Michelangelo? ${ user.Likes_Michelangelo }
+  
+  Do you like Donatello? ${ user.Likes_Donatello }
+  
+  Do you like Raphael? ${ user.Likes_Raphael }
+  
+  Your favourite Art Gallery is ${ user.favourtie_gallery }.
+  
+  Your signature: ${ user.signature }
 ---
-question: What is your name?
-fields:
-  - Name: name
+generic object: Individual
+question: |
+  What is ${x.object_possessive('name') }?
+fields: 
+  - first name: x.name.first
+  - last name: x.name.last
+---
+question: Do you live with anyone?
+yesno: cohabs.there_are_any
+---
+question: Do you live with anyone else?
+yesno: cohabs.there_is_another
+---
+question: Are you artistic?
+yesno: user.is_artistic
+---
+question: |
+  Which of these artists do you like?
+fields: 
+  - Leonardo da Vinci: user.Likes_Leonardo_da_Vinci
+    datatype: yesnowide 
+  - Michelangelo: user.Likes_Michelangelo
+    datatype: yesnowide
+  - Donatello: user.Likes_Donatello
+    datatype: yesnowide
+  - Raphael: user.Likes_Raphael
+    datatype: yesnowide
+---
+question: |
+  What is your favourite art gallery?
+field: user.favourtie_gallery
+choices:
+  - MET Gallery
+  - Art Gallery of Alberta
+  - The Louvre
+  - The National Gallery (London)
+---
+question: Please sign
+signature: user.signature
