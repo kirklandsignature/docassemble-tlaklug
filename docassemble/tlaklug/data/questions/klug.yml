@@ -1,36 +1,57 @@
 objects: 
   - user: Individual
-  - cohabs: DAList.using(object_type=Individual) 
   - family_members: DAList.using(object_type=Individual) 
 ---
 mandatory: true
-question: 
-    Hello, ${ user }!
+question: Results
 subquestion: |
   
-  You live with ${ cohabs }
+  Hello, ${ user }!
   
-  I asked whether you are artistic. You said ${ user.is_artistic }.
+  % if user_eligible:
+  Congratulations, you qualify for legal aid.
+  % else:
+  We regret to inform you that you do not qualify for legal aid. 
+  % endif
   
-  Do you like Leonardo da Vinci? ${ user.Likes_Leonardo_da_Vinci }
+  % if has_lawyer:
+  We understand you do not currently have a lawyer.
+  % endif
   
-  Do you like Michelangelo? ${ user.Likes_Michelangelo }
+  % if still_acting:
+  We also understand your current lawyer is still acting on your behalf.
+  % endif
   
-  Do you like Donatello? ${ user.Likes_Donatello }
+  % if afford_lawyer:
+  You also told us that you cannot afford a lawyer.
+  % endif
   
-  Do you like Raphael? ${ user.Likes_Raphael }
+  % if LAA_assistance:
+  you told us appeal
   
-  Your favourite Art Gallery is ${ user.favourtie_gallery }.
+  % else:
   
-  Your signature: ${ user.signature }
-
+  % if located_Alberta:
+  Your legal matter is located in Alberta, which meets our requirements.
+  % endif
+  
+  % if lives_Alberta:
+  You also told us that you live in Alberta. We only provide legal aid to residents of Alberta.
+  % endif
+  
+  % if criminal_matter:
+  We understand you require representation in a criminal matter.
+  % endif
+  
+  % if family_matter:
+  We understand you require representation in a family matter. 
+  % endif
+  % endif
 attachments:
   - name: Summary of Benefits
     filename: benefits_summary
     content: |
-      
-      Hello, ${ user }.
-      
+     
       % if len(family_members) > 0:
       The family members you told me about are: ${ family_members }.
       
@@ -45,14 +66,33 @@ attachments:
       % else: 
       You didn't tell me about any family members.
       % endif
-       
-      % if aid_qualifies:
-      I understand you qualify for legal aid.
-      % else: 
-      I understand you do not qualify for legal aid.
-      % endif 
       
        You told me you were born on ${ format_date(birthday, format='EEE, MMMM d, yyyy') }. A good lawyer would write that as ${ format_date(birthday, format="yyyy-MM-dd") }    
+---
+code: |
+  # Eligibility
+  
+  if LAA_assistance or (user_represented and user_resident and criminal_matter) or (user_represented and user_resident and family_matter):
+    user_eligible = True
+  else:
+    user_eligible = False
+    
+---
+code: |
+  # Representation
+  
+  if (has_lawyer and still_acting) or afford_lawyer:
+    user_represented = True
+  else:
+    user_represented = False
+---
+code: |
+  # Residency
+  
+  if (located_Alberta and lives_Alberta):
+    user_resident = True
+  else:
+    user_resident = False
 ---
 generic object: Individual
 question: |
@@ -61,35 +101,29 @@ fields:
   - first name: x.name.first
   - last name: x.name.last
 ---
-question: Do you live with anyone?
-yesno: cohabs.there_are_any
+question: Do you have a lawyer?
+noyes: has_lawyer
 ---
-question: Do you live with anyone else?
-yesno: cohabs.there_is_another
+question: Can you afford a lawyer?
+noyes: afford_lawyer
 ---
-question: Are you artistic?
-yesno: user.is_artistic
+question: Is your current lawyer still acting for you?
+yesno: still_acting
 ---
-question: |
-  Which of these artists do you like?
-fields: 
-  - Leonardo da Vinci: user.Likes_Leonardo_da_Vinci
-    datatype: yesnowide 
-  - Michelangelo: user.Likes_Michelangelo
-    datatype: yesnowide
-  - Donatello: user.Likes_Donatello
-    datatype: yesnowide
-  - Raphael: user.Likes_Raphael
-    datatype: yesnowide
+question: Is your legal matter located in Alberta?
+yesno: located_Alberta
 ---
-question: |
-  What is your favourite art gallery?
-field: user.favourtie_gallery
-choices:
-  - MET Gallery
-  - Art Gallery of Alberta
-  - The Louvre
-  - The National Gallery (London)
+question: Is your legal matter a family law matter?
+yesno: family_matter
+---
+question: Is your legal matter a criminal law matter?
+yesno: criminal_matter
+---
+question: Do you live in Alberta?
+yesno: lives_Alberta
+---
+question: Is your matter an appeal of a matter for which you recieved LAA assistance?
+yesno: LAA_assistance
 ---
 question: Please sign
 signature: user.signature
@@ -106,9 +140,6 @@ yesno: family_members.there_are_any
 ---
 question: Do you have any additional family members?
 yesno: family_members.there_is_another
----
-question: Do you qualify for legal aid?
-yesno: aid_qualifies
 ---
 question: what is your birthday?
 fields:
